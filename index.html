@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Student Life Simulator - Damian Kita</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        
+        :root {
+            --neon-cyan: #00f5ff;
+            --neon-magenta: #ff00ff;
+            --neon-yellow: #ffff00;
+            --neon-green: #00ff88;
+            --dark-bg: #0a0a0f;
+            --panel-bg: #1a1a2e;
+            --text-light: #ffffff;
+            --text-dim: #a0a0b0;
+        }
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-light);
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0f0f1a 100%);
+        }
+        
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0,245,255,0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(255,0,255,0.1) 0%, transparent 40%),
+                        radial-gradient(circle at 20% 80%, rgba(0,255,136,0.1) 0%, transparent 40%);
+            animation: rotate 30s linear infinite;
+        }
+        
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Start Screen */
+        .start-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10,10,15,0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+        
+        .game-title {
+            font-size: clamp(2rem, 8vw, 4rem);
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, var(--neon-cyan), var(--neon-magenta), var(--neon-yellow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: glow 2s ease-in-out infinite alternate;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        @keyframes glow {
+            from { filter: drop-shadow(0 0 20px rgba(0,245,255,0.5)); }
+            to { filter: drop-shadow(0 0 30px rgba(255,0,255,0.5)); }
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--text-dim);
+            margin-bottom: 3rem;
+            text-align: center;
+            padding: 0 1rem;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta));
+            border: none;
+            padding: 1rem 3rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--dark-bg);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(0,245,255,0.3);
+            margin: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 6px 25px rgba(255,0,255,0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(0,245,255,0.1);
+        }
+        
+        /* Game Container */
+        .game-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+            display: none;
+            min-height: 100vh;
+        }
+        
+        /* Header Stats */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+            background: rgba(26,26,46,0.8);
+            padding: 1rem;
+            border-radius: 20px;
+            border: 1px solid rgba(0,245,255,0.2);
+            backdrop-filter: blur(10px);
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 0.5rem;
+            position: relative;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.3rem;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--neon-cyan);
+        }
+        
+        .stat-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+        
+        .stat-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 10px currentColor;
+        }
+        
+        .health-fill { background: var(--neon-green); }
+        .energy-fill { background: var(--neon-yellow); }
+        .knowledge-fill { background: var(--neon-cyan); }
+        .social-fill { background: var(--neon-magenta); }
+        .money-fill { background: #ffd700; }
+        
+        /* Main Game Area */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+        
+        @media (min-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        .panel {
+            background: rgba(26,26,46,0.9);
+            border-radius: 20px;
+            padding: 1.5rem;
+            border: 1px solid rgba(0,245,255,0.2);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .panel-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--neon-cyan);
+        }
+        
+        .panel-title::before {
+            content: '▶';
+            color: var(--neon-magenta);
+            font-size: 0.8rem;
+        }
+        
+        /* Activity Cards */
+        .activities {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+        }
+        
+        .activity-card {
+            background: linear-gradient(135deg, rgba(0,245,255,0.1), rgba(255,0,255,0.1));
+            border: 1px solid rgba(0,245,255,0.3);
+            border-radius: 15px;
+            padding: 1.5rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .activity-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .activity-card:hover::before {
+            left: 100%;
+        }
+        
+        .activity-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 10px 25px rgba(0,245,255,0.2);
+        }
+        
+        .activity-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        
+        .activity-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.3rem;
+        }
+        
+        .activity-cost {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+        
+        /* Status Log */
+        .log-container {
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+        
+        .log-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .log-container::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+        }
+        
+        .log-container::-webkit-scrollbar-thumb {
+            background: var(--neon-cyan);
+            border-radius: 3px;
+        }
+        
+        .log-entry {
+            padding: 0.8rem;
+            margin-bottom: 0.5rem;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            border-left: 3px solid var(--neon-cyan);
+            font-size: 0.9rem;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .log-time {
+            font-size: 0.75rem;
+            color: var(--neon-magenta);
+            margin-bottom: 0.2rem;
+        }
+        
+        /* Quiz Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            background: var(--panel-bg);
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 100%;
+            border: 2px solid var(--neon-cyan);
+            box-shadow: 0 0 50px rgba(0,245,255,0.3);
+            animation: modalPop 0.3s ease;
+        }
+        
+        @keyframes modalPop {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .quiz-question {
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            color: var(--neon-yellow);
+            font-weight: 600;
+        }
+        
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+        
+        .quiz-option {
+            background: rgba(0,245,255,0.1);
+            border: 1px solid rgba(0,245,255,0.3);
+            padding: 1rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+        
+        .quiz-option:hover {
+            background: rgba(0,245,255,0.2);
+            transform: translateX(5px);
+        }
+        
+        .quiz-option.correct {
+            background: rgba(0,255,136,0.3);
+            border-color: var(--neon-green);
+        }
+        
+        .quiz-option.wrong {
+            background: rgba(255,0,0,0.3);
+            border-color: #ff4444;
+        }
+        
+        /* Audio Controls */
+        .audio-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+        
+        .audio-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(26,26,46,0.9);
+            border: 2px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+        
+        .audio-btn:hover {
+            background: var(--neon-cyan);
+            color: var(--dark-bg);
+            transform: scale(1.1);
+        }
+        
+        /* Author Footer */
+        .author-footer {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(26,26,46,0.9);
+            padding: 0.8rem 1.2rem;
+            border-radius: 50px;
+            border: 1px solid rgba(0,245,255,0.3);
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        
+        .author-footer a {
+            color: var(--neon-cyan);
+            text-decoration: none;
+            font-weight: 600;
+            margin-left: 5px;
+        }
+        
+        .author-footer a:hover {
+            color: var(--neon-magenta);
+        }
+        
+        /* Progress Ring */
+        .semester-info {
+            text-align: center;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+        }
+        
+        .semester-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--neon-yellow);
+        }
+        
+        .week-info {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+        }
+        
+        /* Event Popup */
+        .event-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--panel-bg);
+            border: 2px solid var(--neon-magenta);
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            z-index: 3000;
+            display: none;
+            box-shadow: 0 0 50px rgba(255,0,255,0.4);
+            text-align: center;
+        }
+        
+        .event-title {
+            font-size: 1.5rem;
+            color: var(--neon-magenta);
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+        
+        .event-description {
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+        
+        /* Floating Text Animation */
+        .floating-text {
+            position: absolute;
+            font-weight: 700;
+            font-size: 1.2rem;
+            pointer-events: none;
+            animation: floatUp 1s ease-out forwards;
+            z-index: 100;
+        }
+        
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-50px) scale(1.2); }
+        }
+        
+        .positive { color: var(--neon-green); }
+        .negative { color: #ff4444; }
+        
+        /* Responsive */
+        @media (max-width: 480px) {
+            .stats-bar {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.5rem;
+                padding: 0.5rem;
+            }
+            
+            .activities {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .author-footer {
+                font-size: 0.75rem;
+                padding: 0.5rem 0.8rem;
+                bottom: 80px;
+                left: 50%;
+                transform: translateX(-50%);
+                white-space: nowrap;
+            }
+            
+            .audio-controls {
+                bottom: 80px;
+                right: 10px;
+            }
+        }
+        
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: var(--neon-cyan);
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    
+    <!-- Start Screen -->
+    <div class="start-screen" id="startScreen">
+        <h1 class="game-title">Student Life<br>Simulator</h1>
+        <p class="subtitle">Przeżyj życie studenckie pełne wyzwań edukacyjnych!</p>
+        <button class="btn" onclick="startGame()">Rozpocznij Grę</button>
+        <button class="btn btn-secondary" onclick="toggleSound()">🔊 Dźwięk: Włączony</button>
+    </div>
+    
+    <!-- Game Container -->
+    <div class="game-container" id="gameContainer">
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-label">Zdrowie</div>
+                <div class="stat-value" id="healthVal">100</div>
+                <div class="stat-bar"><div class="stat-fill health-fill" id="healthBar" style="width: 100%"></div></div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Energia</div>
+                <div class="stat-value" id="energyVal">100</div>
+                <div class="stat-bar"><div class="stat-fill energy-fill" id="energyBar" style="width: 100%"></div></div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Wiedza</div>
+                <div class="stat-value" id="knowledgeVal">0</div>
+                <div class="stat-bar"><div class="stat-fill knowledge-fill" id="knowledgeBar" style="width: 0%"></div></div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Towarzyskość</div>
+                <div class="stat-value" id="socialVal">50</div>
+                <div class="stat-bar"><div class="stat-fill social-fill" id="socialBar" style="width: 50%"></div></div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Budżet</div>
+                <div class="stat-value" id="moneyVal">500zł</div>
+                <div class="stat-bar"><div class="stat-fill money-fill" id="moneyBar" style="width: 50%"></div></div>
+            </div>
+        </div>
+        
+        <div class="semester-info">
+            <div class="semester-number" id="semesterDisplay">Semestr 1</div>
+            <div class="week-info" id="weekDisplay">Tydzień 1 / 15</div>
+        </div>
+        
+        <div class="main-grid">
+            <div class="panel">
+                <h2 class="panel-title">Działania</h2>
+                <div class="activities">
+                    <div class="activity-card" onclick="doActivity('study')">
+                        <span class="activity-icon">📚</span>
+                        <div class="activity-name">Ucz się</div>
+                        <div class="activity-cost">-20 Energii</div>
+                    </div>
+                    <div class="activity-card" onclick="doActivity('sleep')">
+                        <span class="activity-icon">😴</span>
+                        <div class="activity-name">Śpij</div>
+                        <div class="activity-cost">+ Energia</div>
+                    </div>
+                    <div class="activity-card" onclick="doActivity('party')">
+                        <span class="activity-icon">🎉</span>
+                        <div class="activity-name">Impreza</div>
+                        <div class="activity-cost">-50zł, -30 Energii</div>
+                    </div>
+                    <div class="activity-card" onclick="doActivity('work')">
+                        <span class="activity-icon">💼</span>
+                        <div class="activity-name">Praca</div>
+                        <div class="activity-cost">+200zł, -40 Energii</div>
+                    </div>
+                    <div class="activity-card" onclick="doActivity('gym')">
+                        <span class="activity-icon">💪</span>
+                        <div class="activity-name">Siłownia</div>
+                        <div class="activity-cost">-30zł, -20 Energii</div>
+                    </div>
+                    <div class="activity-card" onclick="doActivity('exam')">
+                        <span class="activity-icon">📝</span>
+                        <div class="activity-name">Egzamin</div>
+                        <div class="activity-cost">Wymaga wiedzy</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <h2 class="panel-title">Dziennik Zdarzeń</h2>
+                <div class="log-container" id="logContainer">
+                    <div class="log-entry">
+                        <div class="log-time">Dzień 1</div>
+                        <div>Rozpoczynasz studia! Powodzenia!</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quiz Modal -->
+    <div class="modal" id="quizModal">
+        <div class="modal-content">
+            <div class="quiz-question" id="quizQuestion">Pytanie?</div>
+            <div class="quiz-options" id="quizOptions"></div>
+        </div>
+    </div>
+    
+    <!-- Event Popup -->
+    <div class="event-popup" id="eventPopup">
+        <div class="event-title" id="eventTitle">Zdarzenie!</div>
+        <div class="event-description" id="eventDesc">Opis...</div>
+        <button class="btn" onclick="closeEvent()">OK</button>
+    </div>
+    
+    <!-- Audio Controls -->
+    <div class="audio-controls">
+        <button class="audio-btn" onclick="toggleMusic()" id="musicBtn">🎵</button>
+        <button class="audio-btn" onclick="toggleSound()" id="soundBtn">🔊</button>
+    </div>
+    
+    <!-- Author Footer -->
+    <div class="author-footer">
+        Created by <a href="https://linktr.ee/kitadamian" target="_blank">Damian Kita</a>
+    </div>
+
+    <script>
+        // Game State
+        let gameState = {
+            health: 100,
+            energy: 100,
+            knowledge: 0,
+            social: 50,
+            money: 500,
+            semester: 1,
+            week: 1,
+            day: 1,
+            soundEnabled: true,
+            musicEnabled: true
+        };
+        
+        // Audio Context
+        let audioContext = null;
+        let musicOscillator = null;
+        let musicGain = null;
+        
+        // Questions Database
+        const questions = [
+            {
+                question: "Ile wynosi pierwiastek kwadratowy z 144?",
+                options: ["10", "12", "14", "16"],
+                correct: 1
+            },
+            {
+                question: "Który pierwiastek jest najlżejszy?",
+                options: ["Hel", "Wodór", "Tlen", "Azot"],
+                correct: 1
+            },
+            {
+                question: "W którym roku wybuchła II wojna światowa?",
+                options: ["1938", "1939", "1940", "1941"],
+                correct: 1
+            },
+            {
+                question: "Jaka jest stolica Australii?",
+                options: ["Sydney", "Melbourne", "Canberra", "Brisbane"],
+                correct: 2
+            },
+            {
+                question: "Który algoritm sortowania ma złożoność O(n log n) w średnim przypadku?",
+                options: ["Bubble Sort", "Quick Sort", "Insertion Sort", "Selection Sort"],
+                correct: 1
+            },
+            {
+                question: "Ile kontynentów jest na Ziemi?",
+                options: ["5", "6", "7", "8"],
+                correct: 2
+            },
+            {
+                question: "Jaka jest największa planeta w Układzie Słonecznym?",
+                options: ["Saturn", "Jowisz", "Neptun", "Uran"],
+                correct: 1
+            },
+            {
+                question: "Który język programowania został stworzony przez Bjarne Stroustrupa?",
+                options: ["Java", "Python", "C++", "JavaScript"],
+                correct: 2
+            }
+        ];
+        
+        // Initialize Audio
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+        
+        // Sound Effects
+        function playSound(type) {
+            if (!gameState.soundEnabled || !audioContext) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            switch(type) {
+                case 'click':
+                    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.1);
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.1);
+                    break;
+                case 'success':
+                    oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(800, audioContext.currentTime + 0.2);
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.3);
+                    break;
+                case 'error':
+                    oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.3);
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.3);
+                    break;
+                case 'levelup':
+                    oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+                    oscillator.frequency.setValueAtTime(554, audioContext.currentTime + 0.1);
+                    oscillator.frequency.setValueAtTime(659, audioContext.currentTime + 0.2);
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.6);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.6);
+                    break;
+            }
+        }
+        
+        // Background Music
+        function startMusic() {
+            if (!gameState.musicEnabled || !audioContext || musicOscillator) return;
+            
+            musicOscillator = audioContext.createOscillator();
+            musicGain = audioContext.createGain();
+            
+            musicOscillator.connect(musicGain);
+            musicGain.connect(audioContext.destination);
+            
+            musicOscillator.type = 'sine';
+            musicOscillator.frequency.setValueAtTime(220, audioContext.currentTime);
+            
+            // Simple ambient pattern
+            let time = audioContext.currentTime;
+            const notes = [220, 261.63, 329.63, 392, 329.63, 261.63];
+            notes.forEach((freq, i) => {
+                musicOscillator.frequency.setValueAtTime(freq, time + i * 2);
+            });
+            
+            musicGain.gain.setValueAtTime(0.05, audioContext.currentTime);
+            musicOscillator.start();
+            
+            // Loop
+            musicOscillator.onended = () => {
+                if (gameState.musicEnabled) startMusic();
+            };
+        }
+        
+        function stopMusic() {
+            if (musicOscillator) {
+                musicOscillator.stop();
+                musicOscillator = null;
+            }
+        }
+        
+        function toggleMusic() {
+            gameState.musicEnabled = !gameState.musicEnabled;
+            document.getElementById('musicBtn').textContent = gameState.musicEnabled ? '🎵' : '🔇';
+            if (gameState.musicEnabled) {
+                startMusic();
+            } else {
+                stopMusic();
+            }
+        }
+        
+        function toggleSound() {
+            gameState.soundEnabled = !gameState.soundEnabled;
+            const btn = document.getElementById('soundBtn');
+            if (btn) btn.textContent = gameState.soundEnabled ? '🔊' : '🔇';
+            
+            // Update start screen button if exists
+            const startBtn = document.querySelector('.start-screen .btn-secondary');
+            if (startBtn) {
+                startBtn.textContent = gameState.soundEnabled ? '🔊 Dźwięk: Włączony' : '🔇 Dźwięk: Wyłączony';
+            }
+        }
+        
+        // Game Functions
+        function startGame() {
+            initAudio();
+            if (gameState.musicEnabled) startMusic();
+            playSound('success');
+            
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('gameContainer').style.display = 'block';
+            addLog('Rozpoczynasz swoją przygodę studencką!');
+        }
+        
+        function updateStats() {
+            // Clamp values
+            gameState.health = Math.max(0, Math.min(100, gameState.health));
+            gameState.energy = Math.max(0, Math.min(100, gameState.energy));
+            gameState.knowledge = Math.max(0, Math.min(100, gameState.knowledge));
+            gameState.social = Math.max(0, Math.min(100, gameState.social));
+            gameState.money = Math.max(0, gameState.money);
+            
+            // Update UI
+            document.getElementById('healthVal').textContent = Math.floor(gameState.health);
+            document.getElementById('healthBar').style.width = gameState.health + '%';
+            
+            document.getElementById('energyVal').textContent = Math.floor(gameState.energy);
+            document.getElementById('energyBar').style.width = gameState.energy + '%';
+            
+            document.getElementById('knowledgeVal').textContent = Math.floor(gameState.knowledge);
+            document.getElementById('knowledgeBar').style.width = gameState.knowledge + '%';
+            
+            document.getElementById('socialVal').textContent = Math.floor(gameState.social);
+            document.getElementById('socialBar').style.width = gameState.social + '%';
+            
+            document.getElementById('moneyVal').textContent = gameState.money + 'zł';
+            document.getElementById('moneyBar').style.width = Math.min(100, gameState.money / 10) + '%';
+            
+            document.getElementById('semesterDisplay').textContent = 'Semestr ' + gameState.semester;
+            document.getElementById('weekDisplay').textContent = 'Tydzień ' + gameState.week + ' / 15';
+            
+            // Check game over
+            if (gameState.health <= 0) {
+                showEvent('Game Over!', 'Twoje zdrowie spadło do zera. Musisz odpocząć i zacząć od nowa.');
+                resetGame();
+            }
+        }
+        
+        function addLog(message) {
+            const container = document.getElementById('logContainer');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<div class="log-time">Dzień ${gameState.day}</div><div>${message}</div>`;
+            container.insertBefore(entry, container.firstChild);
+        }
+        
+        function showFloatingText(element, text, type) {
+            const rect = element.getBoundingClientRect();
+            const floatEl = document.createElement('div');
+            floatEl.className = `floating-text ${type}`;
+            floatEl.textContent = text;
+            floatEl.style.left = rect.left + rect.width / 2 + 'px';
+            floatEl.style.top = rect.top + 'px';
+            document.body.appendChild(floatEl);
+            setTimeout(() => floatEl.remove(), 1000);
+        }
+        
+        function doActivity(type) {
+            playSound('click');
+            const card = event.currentTarget;
+            
+            switch(type) {
+                case 'study':
+                    if (gameState.energy < 20) {
+                        addLog('Jesteś zbyt zmęczony, aby się uczyć!');
+                        playSound('error');
+                        return;
+                    }
+                    gameState.energy -= 20;
+                    gameState.knowledge += 10;
+                    addLog('Spędziłeś czas na nauce. Wiedza +10');
+                    showFloatingText(card, '+10 Wiedzy', 'positive');
+                    playSound('success');
+                    advanceTime();
+                    break;
+                    
+                case 'sleep':
+                    gameState.energy = Math.min(100, gameState.energy + 50);
+                    gameState.health = Math.min(100, gameState.health + 10);
+                    addLog('Dobry sen! Energia +50, Zdrowie +10');
+                    showFloatingText(card, '+50 Energii', 'positive');
+                    playSound('success');
+                    advanceTime();
+                    break;
+                    
+                case 'party':
+                    if (gameState.money < 50) {
+                        addLog('Nie masz wystarczająco pieniędzy na imprezę!');
+                        playSound('error');
+                        return;
+                    }
+                    if (gameState.energy < 30) {
+                        addLog('Jesteś zbyt zmęczony na imprezę!');
+                        playSound('error');
+                        return;
+                    }
+                    gameState.money -= 50;
+                    gameState.energy -= 30;
+                    gameState.social += 20;
+                    gameState.health -= 5;
+                    addLog('Świetna impreza! Towarzyskość +20, ale Zdrowie -5');
+                    showFloatingText(card, '+20 Social', 'positive');
+                    playSound('success');
+                    advanceTime();
+                    break;
+                    
+                case 'work':
+                    if (gameState.energy < 40) {
+                        addLog('Jesteś zbyt zmęczony do pracy!');
+                        playSound('error');
+                        return;
+                    }
+                    gameState.energy -= 40;
+                    gameState.money += 200;
+                    gameState.knowledge += 2;
+                    addLog('Praca dorywcza. Zarobek: 200zł');
+                    showFloatingText(card, '+200zł', 'positive');
+                    playSound('success');
+                    advanceTime();
+                    break;
+                    
+                case 'gym':
+                    if (gameState.money < 30) {
+                        addLog('Brak środków na siłownię!');
+                        playSound('error');
+                        return;
+                    }
+                    if (gameState.energy < 20) {
+                        addLog('Zbyt zmęczony na trening!');
+                        playSound('error');
+                        return;
+                    }
+                    gameState.money -= 30;
+                    gameState.energy -= 20;
+                    gameState.health += 15;
+                    addLog('Trening na siłowni. Zdrowie +15');
+                    showFloatingText(card, '+15 Zdrowia', 'positive');
+                    playSound('success');
+                    advanceTime();
+                    break;
+                    
+                case 'exam':
+                    if (gameState.knowledge < 30) {
+                        addLog('Masz za mało wiedzy na egzamin! Ucz się więcej.');
+                        playSound('error');
+                        return;
+                    }
+                    startQuiz();
+                    break;
+            }
+            
+            updateStats();
+        }
+        
+        function advanceTime() {
+            gameState.day++;
+            if (gameState.day % 7 === 0) {
+                gameState.week++;
+                if (gameState.week > 15) {
+                    gameState.semester++;
+                    gameState.week = 1;
+                    playSound('levelup');
+                    showEvent('Nowy Semestr!', `Rozpoczynasz semestr ${gameState.semester}! Gratulacje!`);
+                }
+            }
+            
+            // Random events
+            if (Math.random() < 0.1) {
+                triggerRandomEvent();
+            }
+            
+            updateStats();
+        }
+        
+        function triggerRandomEvent() {
+            const events = [
+                { title: 'Niespodzianka!', desc: 'Znalazłeś 50zł na ulicy! Szczęście Ci sprzyja.', effect: () => { gameState.money += 50; } },
+                { title: 'Grypa', desc: 'Zachorowałeś na grypę. Zdrowie -20, Energia -30', effect: () => { gameState.health -= 20; gameState.energy -= 30; } },
+                { title: 'Bonus od rodziców', desc: 'Rodzice przysłali Ci kieszonkowe +300zł!', effect: () => { gameState.money += 300; } },
+                { title: 'Zakupy', desc: 'Musisz kupić podręczniki. -100zł', effect: () => { gameState.money -= 100; } }
+            ];
+            
+            const event = events[Math.floor(Math.random() * events.length)];
+            event.effect();
+            showEvent(event.title, event.desc);
+            playSound('success');
+        }
+        
+        function showEvent(title, desc) {
+            document.getElementById('eventTitle').textContent = title;
+            document.getElementById('eventDesc').textContent = desc;
+            document.getElementById('eventPopup').style.display = 'block';
+        }
+        
+        function closeEvent() {
+            document.getElementById('eventPopup').style.display = 'none';
+        }
+        
+        function startQuiz() {
+            const question = questions[Math.floor(Math.random() * questions.length)];
+            document.getElementById('quizQuestion').textContent = question.question;
+            
+            const optionsContainer = document.getElementById('quizOptions');
+            optionsContainer.innerHTML = '';
+            
+            question.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'quiz-option';
+                btn.textContent = opt;
+                btn.onclick = () => answerQuiz(idx, question.correct);
+                optionsContainer.appendChild(btn);
+            });
+            
+            document.getElementById('quizModal').style.display = 'flex';
+        }
+        
+        function answerQuiz(selected, correct) {
+            const options = document.querySelectorAll('.quiz-option');
+            options[selected].classList.add(selected === correct ? 'correct' : 'wrong');
+            if (selected !== correct) options[correct].classList.add('correct');
+            
+            setTimeout(() => {
+                document.getElementById('quizModal').style.display = 'none';
+                if (selected === correct) {
+                    gameState.knowledge += 20;
+                    gameState.money += 100;
+                    addLog('Egzamin zdany! Wiedza +20, Stypendium +100zł');
+                    playSound('success');
+                    showFloatingText(document.body, '+20 Wiedzy!', 'positive');
+                } else {
+                    gameState.energy -= 20;
+                    gameState.health -= 10;
+                    addLog('Egzamin niezdany... Energia -20, Stres -10 Zdrowia');
+                    playSound('error');
+                }
+                advanceTime();
+                updateStats();
+            }, 1500);
+        }
+        
+        function resetGame() {
+            gameState = {
+                health: 100,
+                energy: 100,
+                knowledge: 0,
+                social: 50,
+                money: 500,
+                semester: 1,
+                week: 1,
+                day: 1,
+                soundEnabled: gameState.soundEnabled,
+                musicEnabled: gameState.musicEnabled
+            };
+            updateStats();
+            document.getElementById('logContainer').innerHTML = '<div class="log-entry"><div class="log-time">Nowa Gra</div><div>Rozpoczynasz od nowa!</div></div>';
+        }
+        
+        // Initialize
+        updateStats();
+    </script>
+</body>
+</html>
